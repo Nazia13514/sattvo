@@ -206,6 +206,7 @@ app.post('/api/create-order', async (req, res) => {
 
     const { cart } = req.body;
     console.log(`[INFO] Order received with cart:`, JSON.stringify(cart));
+    console.log(`[INFO] Current Catalog Keys:`, Object.keys(catalog));
 
     if (!cart || cart.length === 0) {
       return res.status(400).json({ error: "Cart is empty" });
@@ -215,8 +216,9 @@ app.post('/api/create-order', async (req, res) => {
     let totalAmountInINR = 0;
     cart.forEach(item => {
       const itemPrice = catalog[item.name];
+      console.log(`[DEBUG] Checking product: "${item.name}" -> Price found: ${itemPrice}`);
       if (!itemPrice) {
-        throw new Error(`Product ${item.name} not found in catalog.`);
+        throw new Error(`Product "${item.name}" not found in catalog.`);
       }
       totalAmountInINR += itemPrice * item.qty;
     });

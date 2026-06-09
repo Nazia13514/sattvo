@@ -35,10 +35,10 @@ if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
 // Product Catalog for Backend Price Validation
 // Replace these with your exact prices
 const catalog = {
-  "cashew Sattvo": 350,
-  "almond Sattvo": 350,
-  "pistacho Sattvo": 350,
-  "walnuts Sattvo": 350
+  "Almond Sattvo": 350,
+  "Walnut Sattvo": 350,
+  "Cashew Sattvo": 350,
+  "Pistachio Sattvo": 350
 };
 
 // ==========================================
@@ -87,9 +87,9 @@ async function saveToGoogleSheets(orderData) {
         ]]
       }
     });
-    console.log("Order saved to Google Sheets");
+    console.log(`[SUCCESS] Order ${orderData.orderId} saved to Google Sheets successfully`);
   } catch (error) {
-    console.error("Google Sheets Error:", error);
+    console.error(`[FAILURE] Google Sheets Error for Order ${orderData.orderId}:`, error);
   }
 }
 
@@ -125,7 +125,7 @@ async function sendOrderEmail(orderData) {
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: process.env.EMAIL_USER, // Send to store admin
-      subject: "New Order Received - ARA Store",
+      subject: "New Order Received - Sattvo",
       html: `
         <h2>New Order Confirmed</h2>
         <p><strong>Order ID:</strong> ${orderData.orderId}</p>
@@ -160,9 +160,9 @@ async function sendOrderEmail(orderData) {
     };
 
     await transporter.sendMail(mailOptions);
-    console.log("Email sent successfully");
+    console.log(`[SUCCESS] Email sent successfully for Order ${orderData.orderId}`);
   } catch (error) {
-    console.error("Nodemailer Error:", error);
+    console.error(`[FAILURE] Nodemailer Error for Order ${orderData.orderId}:`, error);
   }
 }
 
@@ -205,6 +205,7 @@ app.post('/api/create-order', async (req, res) => {
     }
 
     const { cart } = req.body;
+    console.log(`[INFO] Order received with cart:`, JSON.stringify(cart));
 
     if (!cart || cart.length === 0) {
       return res.status(400).json({ error: "Cart is empty" });
@@ -229,6 +230,7 @@ app.post('/api/create-order', async (req, res) => {
     };
 
     const order = await razorpay.orders.create(options);
+    console.log(`[INFO] Payment order created successfully: ${order.id}`);
 
     res.json({
       orderId: order.id,
@@ -276,6 +278,7 @@ app.post('/api/verify-payment', async (req, res) => {
     };
 
     // Process asynchronously (do not block the user response)
+    console.log(`[INFO] Payment verified successfully for order: ${razorpay_order_id}`);
     saveToGoogleSheets(orderData);
     sendOrderEmail(orderData);
 

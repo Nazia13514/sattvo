@@ -1,8 +1,4 @@
 // ===== GLOBAL VARIABLES =====
-// If running on Netlify or GitHub Pages, point this to your backend Railway URL.
-// IMPORTANT: Update this URL to match your EXACT Railway deployment URL!
-let BASE_URL = "https://arabackend-s633.onrender.com";
-
 let whatsappURL = "";
 let cart = []; // Store cart items
 
@@ -129,7 +125,7 @@ document.getElementById("orderForm").addEventListener("submit", async function (
 
   try {
     // 1. Create Order on Backend
-    const response = await fetch(`${BASE_URL}/api/create-order`, {
+    const response = await fetch(`/api/create-order`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ cart: cart })
@@ -143,14 +139,14 @@ document.getElementById("orderForm").addEventListener("submit", async function (
       "key": data.keyId,
       "amount": data.amount,
       "currency": data.currency,
-      "name": "ARA by Space Design Studioz",
-      "description": "Purchase of Fragrances",
-      "image": "images/top1.png",
+      "name": "Sattvo Wellness",
+      "description": "Purchase of Sattvo",
+      "image": "images/logo_top.jpg",
       "order_id": data.orderId,
       "handler": async function (rzp_response) {
         // 3. Verify Payment on Backend
         try {
-          const verifyRes = await fetch(`${BASE_URL}/api/verify-payment`, {
+          const verifyRes = await fetch(`/api/verify-payment`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -206,7 +202,7 @@ function processOrderAfterPayment(name, phone, fullAddress, paymentId) {
     return `- ${item.name} x ${item.qty} (₹${item.price * item.qty})`;
   }).join("\n");
 
-  let message = `🛒 *New Order - ARA*\n\n*Payment Success! ID:* ${paymentId}\n\n*Customer Details:*\nName: ${name}\nPhone: ${phone}\nAddress: ${fullAddress}\n\n*Order Items:*\n${cartItemsText}\n\n*Total Amount:* ₹${totalAmount}`;
+  let message = `🛒 *New Order - Sattvo*\n\n*Payment Success! ID:* ${paymentId}\n\n*Customer Details:*\nName: ${name}\nPhone: ${phone}\nAddress: ${fullAddress}\n\n*Order Items:*\n${cartItemsText}\n\n*Total Amount:* ₹${totalAmount}`;
 
   let whatsappNumber = "917019268918";
   whatsappURL = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;

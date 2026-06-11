@@ -618,24 +618,24 @@ h1, h2, h3, h4, h5, h6 {
   background-color: var(--accent);
 }
 
-.whatsapp-btn {
-  flex: 1;
-  padding: 15px;
-  background-color: transparent;
-  color: var(--text-charcoal);
-  border: 1px solid #ddd;
-  border-radius: var(--radius-btn);
+.wa-submit-btn {
+  background-color: var(--primary) !important;
+  color: var(--secondary) !important;
   font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  transition: 0.3s;
+  border-radius: var(--radius-btn);
+  transition: all 0.3s ease;
 }
 
-.whatsapp-btn:hover {
-  background-color: #f0f0f0;
+.wa-submit-btn:hover {
+  background-color: #3b4d1f !important; /* darker olive green */
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+
+.elegant-textarea {
+  min-height: 120px;
+  resize: vertical;
+  line-height: 1.6;
 }
 
 .cart-summary {

@@ -96,7 +96,7 @@ function updateCartDisplay() {
   }
 }
 
-// ===== ORDER FORM SUBMIT & RAZORPAY =====
+// ===== ORDER FORM SUBMIT =====
 document.getElementById("orderForm").addEventListener("submit", async function (e) {
   e.preventDefault();
 
@@ -105,122 +105,75 @@ document.getElementById("orderForm").addEventListener("submit", async function (
     return;
   }
 
+  const msgDiv = document.getElementById("validationMessage");
+  msgDiv.style.display = "none";
+  msgDiv.innerText = "";
+
+  const name = document.getElementById("name").value.trim();
+  const phone = document.getElementById("phone").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const address = document.getElementById("address").value.trim();
+
+  if (!name || !phone || !email || !address) {
+    msgDiv.innerText = "Please fill in all mandatory fields.";
+    msgDiv.style.display = "block";
+    return;
+  }
+
+  if (!/^\d{10}$/.test(phone)) {
+    msgDiv.innerText = "Please enter a valid 10-digit mobile number.";
+    msgDiv.style.display = "block";
+    return;
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    msgDiv.innerText = "Please enter a valid email address.";
+    msgDiv.style.display = "block";
+    return;
+  }
+
   const submitBtn = document.getElementById("submitOrderBtn");
   submitBtn.disabled = true;
   submitBtn.innerText = "Processing...";
 
-  // GET VALUES
-  let name = document.getElementById("name").value;
-  let phone = document.getElementById("phone").value;
+  let totalAmount = 0;
+  let cartItemsText = cart.map(item => {
+    totalAmount += item.price * item.qty;
+    return `${item.name} × ${item.qty}`;
+  }).join("\n\n");
 
-  let houseNo = document.getElementById("houseNo").value;
-  let street1 = document.getElementById("street1").value;
-  let street2 = document.getElementById("street2").value;
-  let landmark = document.getElementById("landmark").value;
-  let city = document.getElementById("city").value;
-  let state = document.getElementById("state").value;
-  let pincode = document.getElementById("pincode").value;
+  let whatsappMessage = `Hello Sattvo,\n\nI would like to place an order.\n\nName:\n${name}\n\nMobile:\n${phone}\n\nEmail:\n${email}\n\nDelivery Address:\n${address}\n\nORDER DETAILS\n\n${cartItemsText}\n\nTotal Amount:\n₹${totalAmount}\n\nThank you.\n\nNourish • Strength • Thrive`;
 
-  let fullAddress = `${houseNo}, ${street1}, ${street2 ? street2 + ', ' : ''}Landmark: ${landmark}, ${city}, ${state} - ${pincode}`;
+  let whatsappNumber = "917019268918";
+  let finalWhatsappURL = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(whatsappMessage)}`;
 
   try {
-    // 1. Create Order on Backend
-    const response = await fetch(`/api/create-order`, {
+    const response = await fetch(`/api/submit-order`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ cart: cart })
+      body: JSON.stringify({ 
+        customer: { name, phone, email, address },
+        cart: cart,
+        totalAmount: totalAmount
+      })
     });
 
     const data = await response.json();
-    if (!response.ok) throw new Error(data.error || "Failed to create order");
+    if (!response.ok) throw new Error(data.error || "Failed to submit order");
 
-    // 2. Open Razorpay Modal
-    var options = {
-      "key": data.keyId,
-      "amount": data.amount,
-      "currency": data.currency,
-      "name": "Sattvo Wellness",
-      "description": "Purchase of Sattvo",
-      "image": "images/logo_top.jpg",
-      "order_id": data.orderId,
-      "handler": async function (rzp_response) {
-        // 3. Verify Payment on Backend
-        try {
-          const verifyRes = await fetch(`/api/verify-payment`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              razorpay_order_id: rzp_response.razorpay_order_id,
-              razorpay_payment_id: rzp_response.razorpay_payment_id,
-              razorpay_signature: rzp_response.razorpay_signature,
-              customer: { name, phone, address: fullAddress },
-              cart: cart,
-              amount: data.amount
-            })
-          });
+    window.open(finalWhatsappURL, "_blank");
 
-          const verifyData = await verifyRes.json();
-          if (verifyRes.ok) {
-            // Success!
-            processOrderAfterPayment(name, phone, fullAddress, rzp_response.razorpay_payment_id);
-          } else {
-            alert("Payment verification failed: " + verifyData.error);
-          }
-        } catch (err) {
-          alert("Error verifying payment.");
-          console.error(err);
-        }
-      },
-      "prefill": {
-        "name": name,
-        "contact": phone
-      },
-      "theme": {
-        "color": "#c47a2c"
-      }
-    };
-
-    var rzp1 = new Razorpay(options);
-    rzp1.on('payment.failed', function (response) {
-      alert("Payment Failed: " + response.error.description);
-    });
-    rzp1.open();
+    document.getElementById("orderForm").reset();
+    cart = [];
+    updateCartDisplay();
 
   } catch (error) {
     alert("Error: " + error.message);
   } finally {
     submitBtn.disabled = false;
-    submitBtn.innerText = "Proceed to Pay";
+    submitBtn.innerHTML = '<img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WA" width="24"> Order on WhatsApp';
   }
 });
-
-function processOrderAfterPayment(name, phone, fullAddress, paymentId) {
-  // ===== WHATSAPP MESSAGE =====
-  let totalAmount = 0;
-  let cartItemsText = cart.map(item => {
-    totalAmount += item.price * item.qty;
-    return `- ${item.name} x ${item.qty} (₹${item.price * item.qty})`;
-  }).join("\n");
-
-  let message = `🛒 *New Order - Sattvo*\n\n*Payment Success! ID:* ${paymentId}\n\n*Customer Details:*\nName: ${name}\nPhone: ${phone}\nAddress: ${fullAddress}\n\n*Order Items:*\n${cartItemsText}\n\n*Total Amount:* ₹${totalAmount}`;
-
-  let whatsappNumber = "917019268918";
-  whatsappURL = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
-
-  // ===== SHOW POPUP =====
-  document.getElementById("successPopup").style.display = "flex";
-
-  // RESET FORM & CART
-  document.getElementById("orderForm").reset();
-  cart = [];
-  updateCartDisplay();
-}
-
-// ===== POPUP BUTTON FUNCTION =====
-function goToWhatsApp() {
-  window.open(whatsappURL, "_blank");
-  document.getElementById("successPopup").style.display = "none";
-}
 
 // ===== POLICY MODALS =====
 function openPolicyModal(modalId) {
